@@ -1,0 +1,449 @@
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no">
+<link type="text/css" rel="stylesheet" href="styles.css" />
+<title>HTML5 Canvas Filling Window and Centered</title>
+<style type="text/css">
+/*html,body { background:#fff; height:100%; margin:0; padding:0; overflow:hidden }
+canvas { position:absolute; top:0; left:0 }
+p { position:absolute; left:0; right:0; text-align:center; margin:0; padding:0.5em 5em; background:rgba(240,240,240,0.7) }
+#head { top:0; border-bottom:1px solid #999; }
+#foot { bottom:0; font-size:85%; border-top:1px solid #999; font-style:italic; }
+#fps { position:absolute; right:1em; }*/
+</style>
+<script type='application/javascript' src='fastclick.js'></script>
+
+</head><body>
+
+<canvas ></canvas>
+
+<script>
+var ctx = document.querySelector('canvas').getContext('2d')
+var gridSize;
+var x,y,t,s,w,h, v, rat, myult, box
+var n=1
+var start=0
+var z= 0
+var direction=moveball;
+var time=100
+var arraylength=6
+var antiArray=0;
+var u=0
+var i=1
+var score=0;
+resizeCanvas();
+var storeCords=new Array(0,0);
+var randArray=new Array(t,s);
+var randx	= new Array(0, (w-box)/2)
+var randy   = new Array(0, (h-box)/2)
+drawPath();
+window.addEventListener('load', function() {
+    FastClick.attach(document.body);
+}, false);
+
+window.addEventListener("click", checkTouch);
+
+window.addEventListener('resize', resizeCanvas, false);
+function resizeCanvas() 
+{
+n=1;
+w = document.body.offsetWidth,
+ 	h = document.body.offsetHeight;
+ctx.canvas.width  = w
+ctx.canvas.height = h;
+ctx.fillStyle = 'white';
+ctx.fillRect(0, 0,w,h);
+if (w>h)
+{
+box=Math.floor(h/20)*20
+ctx.fillStyle = 'black';
+ctx.fillRect((w-box)/2,(h-box)/2,box,box);	
+}
+if(h>w)
+{
+box=Math.floor(w/20)*20
+ctx.fillStyle = 'black';
+ctx.fillRect((w-box)/2,(h-box)/2,box,box);
+}
+gridSize=box/20
+/*console.log("x,y,gridSize", x, y, gridSize);
+console.log("x+gridSize+gridSIze+gridSize", x+gridSize+gridSize+gridSize)
+console.log("rounded box",Math.floor(box/20))
+console.log("t,s", t,s)*/
+}
+while(n<20)
+{
+randx.push((w-box)/2+n*gridSize)
+randy.push((h-box)/2+n*gridSize)
+n+=1;	
+}
+x=w/2
+y=h/2
+t=w/2
+s=h/2-2*gridSize	
+storeCords=new Array(x-2*gridSize, y, x-gridSize, y, x, y);
+/*	console.log("initialze storecords", storeCords);	
+console.log("box,w,n", box, w, n)
+console.log("randx arary" , randx);
+console.log("randy", randy);*/
+ctx.fillStyle="red";
+ctx.fillRect(t,s, gridSize,gridSize);
+ctx.fillStyle="white";
+ctx.fillRect(x,y,gridSize,gridSize);
+ctx.fillRect(x-gridSize,y,gridSize,gridSize);
+ctx.fillRect(x-2*gridSize,y,gridSize,gridSize);
+ctx.strokeStyle="black";
+ctx.strokeRect(x,y,gridSize,gridSize);
+ctx.strokeRect(x-gridSize,y,gridSize,gridSize);
+ctx.strokeRect(x-2*gridSize,y,gridSize,gridSize);
+
+function randomIntX(from,to)
+{
+random= Math.floor(Math.random()*(to-from+1)+from)
+  return random;
+}
+//document.onclick =  checkTouch;
+function GetWidth()
+  {
+          var x = 0;
+          if (self.innerHeight)
+          {
+                  x = self.innerWidth;
+          }
+          else if (document.documentElement && document.documentElement.clientHeight)
+          {
+                  x = document.documentElement.clientWidth;
+          }
+          else if (document.body)
+          {
+                  x = document.body.clientWidth;
+          }
+          return x;
+  }
+var screenX= GetWidth();
+function checkTouch(e){
+
+var click= e.clientX
+ if ((click < screenX/2) && (direction!=moveup) && (direction!=movedown)) 
+  {
+clearTimeout(myult);
+direction=movedown;
+myult=setTimeout(direction, 0);
+z=0;
+  }
+  else if (((click < screenX/2) && (direction=moveup)) ||  ((click< screenX/2) && (direction=movedown)))
+  {
+clearTimeout(myult);
+direction=moveleft;
+myult=setTimeout(direction, 0);
+z=0;
+
+
+  }
+    else if (((click > screenX/2) && (direction!=movedown) && (direction!=moveup)))
+  {
+clearTimeout(myult);
+direction=moveup;
+myult=setTimeout(direction, 0);
+z=0;
+
+
+  }
+    else if (((click > screenX/2) && (direction=moveup)) ||  ((click> screenX/2) && (direction=movedown)))
+  {
+clearTimeout(myult);
+direction=moveball;
+myult=setTimeout(direction, 0);
+z=0;
+
+
+  }
+}
+
+
+
+document.onkeydown = checkKey;
+function checkKey(e) {
+
+   //e = e || window.event;
+if (e.keyCode=='80')
+{
+checkDir(e);
+}
+else 
+{if (start ==0)
+{
+checkDir(e);
+start=1;	
+
+}
+else if( (direction!= moveup && e.keyCode== '38')|| (direction!= moveball && e.keyCode=='39')|| (direction!= moveleft && e.keyCode=='37')|| (direction!= movedown && e.keyCode=='40'))
+{
+  checkDir(e);
+}
+}
+if (e.keyCode =='32')
+{
+if (z==1)
+{
+setTimeout(direction, 0);
+z=0
+}
+else if (z==0)
+{
+clearTimeout(myult);
+z=1
+}
+}
+console.log(e.keyCode)
+}
+
+function checkDir(e)
+{
+if (direction!=movedown && e.keyCode == '38') {
+       // up arrow
+clearTimeout(myult);
+direction=moveup;
+myult=setTimeout(direction, 0);
+z=0;
+   }
+   else if (direction!=moveup && e.keyCode == '40') {
+       // down arrow
+clearTimeout(myult);
+direction=movedown;
+myult=setTimeout(direction, 0);
+z=0;
+   }
+else if (direction!= moveleft && e.keyCode=='39')
+{
+//right arrow
+clearTimeout(myult);
+direction=moveball;
+myult=setTimeout(direction, 0);
+z=0;
+}
+else if (direction!= moveball&&e.keyCode=='37')
+{
+//left arrow
+clearTimeout(myult);
+direction=moveleft;
+myult=setTimeout(direction, 0);
+z=0;
+}
+}
+
+function moveball()
+{	
+x+=gridSize;
+drawPath();
+if(x<box+(w-box)/2)
+{
+myult=setTimeout(moveball, time);
+}
+else if ( x>=box+(w-box)/2)
+{
+x= (w-box)/2;
+myult=setTimeout(moveball, time)
+}
+
+storeCords.push(x,y);
+rats();
+
+if (storeCords.length>arraylength)
+{
+storeCords.splice(0,2);
+}
+
+growBody();	
+endGame()
+
+}
+
+function moveleft()
+{
+x-=gridSize; 
+drawPath();
+if(x>=(w-box)/2)
+{
+myult=setTimeout(moveleft, time);
+}
+else if(x<(w-box)/2)
+{
+x= box+(w-box)/2-gridSize;
+myult=setTimeout(moveleft, time)
+}
+
+storeCords.push(x,y);	
+rats()
+if (storeCords.length>arraylength)
+{
+storeCords.splice(0,2);
+}
+
+growBody();	
+endGame()
+
+}
+function moveup()
+{
+y-=gridSize; 
+drawPath();	
+
+if(y>=(h-box)/2)
+{
+myult=setTimeout(moveup, time);
+}
+else if(y<=(h-box)/2)
+{
+y= (h-box)/2+box-gridSize;
+myult=setTimeout(moveup, time)
+}
+rats()
+storeCords.push(x,y);
+
+if (storeCords.length>arraylength)
+{
+storeCords.splice(0,2);
+}
+
+growBody();	
+endGame()
+
+}
+
+function movedown()
+{
+y+=gridSize; 
+drawPath();
+if(y<box+(h-box)/2)
+{
+myult=setTimeout(movedown, time);
+}
+else if(y>=box+(h-box)/2)
+{
+y= (h-box)/2;
+myult=setTimeout(movedown, time)
+}
+rats();
+storeCords.push(x,y);
+
+if (storeCords.length>arraylength)
+{
+storeCords.splice(0,2);
+}
+
+growBody();	
+endGame()
+
+}
+
+
+
+function rats()
+{
+if (x==t && y==s)
+{
+t=randx[(randomIntX(1,20))];
+s=randy[(randomIntX(1,20))];
+antiArray=0
+u=0;
+i=1;
+while (antiArray<arraylength)
+{
+if (t==storeCords[u] && s==storeCords[i])
+{
+t=randx[(randomIntX(1,20))];
+s=randy[(randomIntX(1,20))];
+antiArray=0
+u=0;
+i=1;
+}
+u+=2;
+i+=2;	
+antiArray+=2;
+}
+randArray.push(t,s);
+arraylength+=2;
+score+=1;	
+}	
+}
+function drawPath()
+{  
+ctx.fillStyle="black";
+ctx.fillRect((w-box)/2,(h-box)/2,box,box);
+ctx.beginPath();
+ctx.fillStyle="red";
+ctx.fillRect(t,s,gridSize,gridSize);
+ctx.fillStyle="white";
+ctx.fillRect(x,y,gridSize,gridSize);
+ctx.strokeStyle="black";
+ctx.strokeRect(x,y,gridSize,gridSize);
+ctx.fillStyle="white";
+ctx.fillRect(box+(w-box)/2,0,w,h);
+ctx.fillRect(0,0,(w-box)/2,h);
+ctx.fillRect(0,0,w,(h-box)/2);
+ctx.fillStyle="white";
+ctx.fillRect(0,box+(h-box)/2,w,(h-box)/2);
+ctx.fillStyle="red";
+ctx.fillRect((w-box)/2,box+(h-box)/2,100,50);
+ctx.fillRect(w-(w-box)/2-100,box+(h-box)/2,100,50);
+ctx.fill();
+
+}
+function growBody(){
+antiArray=0;
+u=0;
+i=1;
+while(antiArray<arraylength)
+{
+ctx.fillStyle="white";
+ctx.fillRect(storeCords[u],storeCords[i],gridSize, gridSize);
+ctx.strokeStyle="black";
+ctx.strokeRect(storeCords[u],storeCords[i],gridSize, gridSize);
+antiArray+=2;
+u+=2;
+i+=2;
+}	
+}
+function endGame()
+{
+antiarray=0;
+u=0;
+i=1;
+while (antiarray<arraylength-2)
+{
+if (x==storeCords[u] && y==storeCords[i])
+{
+clearTimeout(myult);
+console.log("end"+score.toString());
+window.alert("Score: "+score.toString());
+location.reload(true);
+}
+antiarray+=2;
+u+=2;
+i+=2;
+}
+}
+/*	function evt_lstr(e) {
+var div = document.createElement("div"), date = new Date();
+div.innerHTML = date.getHours() + ":" + ("0" + date.getMinutes()).slice(-2) + ":"
+           + ("0" + date.getSeconds()).slice(-2) + "." + ("00" + date.getMilliseconds()).slice(-3) + " " + e.type;
+   d2.appendChild(div);
+}
+var d1 = document.getElementById("d1"), d2 = document.getElementById("d2");["mouseup","mousedown","mouseout","click","dblclick","touchstart","touchend",
+        "touchleave","touchmove","touchcancel"].forEach(function(te) {
+    d1.addEventListener(te, evt_lstr);
+});
+document.getElementById("clr").addEventListener("click", function(e) {
+   d2.innerHTML = "";
+   e.preventDefault();
+});*/
+
+</script>
+
+
+<!--<div id="d1">"L"</div>
+<div id="d2">"R"</div>
+<a id="clr" href="#"></a>*/
+-->
+</body></html
