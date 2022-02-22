@@ -1,0 +1,865 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  
+  <style>
+  body {
+    margin: 0px;
+    padding: 0px;
+  }
+  </style>
+</head>
+<body>
+  <canvas id="myCanvas" width="2500" height="2500"></canvas>
+  <script>
+//Greyed out comments do not affect code. To gray out either type "//" infront of line or highlight and do ctr+/. To grey out portions of a line, type /*....text here...*/.
+
+
+  //declaring variables
+  var canvas = document.getElementById('myCanvas');
+  var context = canvas.getContext('2d');
+  var centerX = canvas.width / 2;
+  var centerY = canvas.height / 2;
+  var radius = 490;
+  var radius1= radius-170
+  var radius2= radius-300
+  var radius3= radius-420
+  var radiusArray = new Array(radius, radius1, radius2, radius3)
+
+  var operationDotsArray = new Array()
+  var managementDotsArray = new Array()
+  var strategicDotsArray = new Array()
+
+  var segments = 7
+
+
+  //Writing the dots scale at the top left corner
+  
+  context.beginPath();
+  context.font="30px Arial"
+  context.fillStyle = "black";
+  context.textAlign="left"
+
+  context.fillText("Strategic (Inner Ring) scale:       1 dot per 1 personnel", 40,100);
+  context.fillText("Managerial (Middle Ring) scale: 1 dot per 1 personnel", 40,140);
+  context.fillText("Operational (Outer Ring) scale:  1 dot per 5 personnel", 40,180);
+  context.fill();
+
+
+  //Creating three separate arrays to correspond to Excel data. Two additional empty arrays are attached at the bottom for additional slices if necessary. Update numbers as see fit
+
+  //[strategic], [Managerial], [Operational]
+  var USArray = new Array (   
+    /*Marketing*/                    [0,           2,           9],
+    /*Sales*/                        [0,           6,           4],
+    /*Supply Chain*/                 [1,           6,           10],
+    /*R&D*/                          [5,           9,           76],
+    /*Finance*/                      [2,           13,          14],
+    /*HR/Corp Comm*/                 [1,           6,           2],
+    /*Quality*/                      [1,           4,           8],
+    /*Insert new slice title*/       [1,           2 ,            3],
+    /*Insert new slice title*/       [,            ,            ])
+
+  //[strategic], [Managerial], [Operational]
+  var UKArray = new Array (   
+    /*Marketing*/                    [0,           3,           3],
+    /*Sales*/                        [1,           0,           2],
+    /*Supply Chain*/                 [1,           3,           2],
+    /*R&D*/                          [4,           24,          41],
+    /*Finance*/                      [2,           2,           6],
+    /*HR/Corp Comm*/                 [0,           2,           2],
+    /*Quality*/                      [0,           1,           3],
+    /*Insert new slice title*/       [1,            1,           2 ],
+    /*Insert new slice title*/       [,            ,            ])
+
+   //  [strategic]     [Managerial], [Operational]
+   var OtherArray = new Array (   
+    /*Marketing*/                    [0,           0,           1],
+    /*Sales*/                        [0,           4,           12],
+    /*Supply Chain*/                 [0,           0,           5],
+    /*R&D*/                          [0,           1,           8],
+    /*Finance*/                      [0,           1,           1],
+    /*HR/Corp Comm*/                 [0,           2,           0],
+    /*Quality*/                      [0,           0,           3], 
+    [ 1,           0,            1],
+    [ ,           ,            ])
+
+
+   var y=0
+   var x=0
+   var k=(2/segments)*Math.PI
+   var r=k
+
+  //To draw the three circles. Can alter radius variable at the top to adjust ring size    
+  context.beginPath();
+  context.arc(centerX, centerY, radius, x, 2*Math.PI, false);
+  context.fillStyle = 'lightblue';
+  context.fill();
+  context.lineWidth = 3;
+  context.strokeStyle = '#003300';
+  context.stroke();
+
+  context.beginPath();
+  context.arc(centerX, centerY, radius1, x, 2*Math.PI, false);
+  context.fillStyle = 'white';
+  context.fill();
+  context.lineWidth = 3;
+  context.strokeStyle = '#003300';
+  context.stroke();
+
+  context.beginPath();
+  context.arc(centerX, centerY, radius2, x, 2*Math.PI, false);
+  context.fillStyle = 'lightblue';
+  context.fill();
+  context.lineWidth = 3;
+  context.strokeStyle = '#003300';
+  context.stroke();
+//========================================================================================
+//random function to short coordinates
+Array.prototype.shuffle = function() {
+  var input = this;
+
+  for (var i = input.length-1; i >=0; i--) {
+
+    var randomIndex = Math.floor(Math.random()*(i+1)); 
+    var itemAtIndex = input[randomIndex]; 
+
+    input[randomIndex] = input[i]; 
+    input[i] = itemAtIndex;
+  }
+  return input;
+}
+
+
+//remove duplicate items in array
+
+function sortCoordinates(arr)
+{
+  var obj = {};
+  for(var i = 0, l = arr.length; i < l; i++){
+    var el = arr[i];
+    var lat = el[0];
+    var lng = el[1];
+    if(!obj[lat + lng])
+    {
+      obj[lat + lng] = [lat, lng];
+    } 
+  }
+
+  var out = [];
+  for(p in obj){
+    out.push([obj[p][0], obj[p][1]]);
+  }
+  return out;
+}
+//last slice for uneven
+
+function segmentDots4Middle(functionDotsArray,sliceNumber, layers, Numsections, NumColors)
+{
+
+  var zx=15
+  var segmentArray = new Array()
+  var segmentArray2= new Array()
+
+  for(var layers1=0; layers1<layers; layers1++)
+  {
+    var dotz1 =(sliceNumber)*Numsections-Numsections/2
+    var dotz = (sliceNumber-1)*Numsections+1
+    var arrayNumber 
+    if(functionDotsArray==operationDotsArray)
+    {
+      arrayNumber=1
+    }
+    else if(functionDotsArray==managementDotsArray)
+    {
+      arrayNumber=2
+    }
+    else if(functionDotsArray==strategicDotsArray)
+    {
+      arrayNumber=3
+    }
+ while(dotz<Numsections/2+(sliceNumber-1)*Numsections)
+    {
+     var run = (radiusArray[arrayNumber]+zx)*(Math.cos(2*Math.PI-(((dotz)*2*Math.PI)/(segments*Numsections))))
+     var rise = Math.sqrt((radiusArray[arrayNumber]+zx)*(radiusArray[arrayNumber]+zx)-run*run)
+     segmentArray.push([Math.round(centerX+run,0), Math.round(centerY+rise,0)])
+
+     // if(dotz1==(sliceNumber-1)*Numsections)   
+     // {
+     //  segmentArray.reverse()
+     //  document.write("reverse")
+     // }   
+
+     // context.beginPath()
+     // context.arc(Math.round(centerX+run,0), Math.round(centerY+rise,0), 7, 0, 2*Math.PI, false);
+     //   context.fillStyle = 'red';
+     //   context.fill();
+     //   context.strokeStyle = '#003300';
+     //   context.stroke();
+     //   context.lineWidth = 1;
+     dotz++;
+
+
+    }
+    while(dotz1>(sliceNumber-1)*Numsections)
+    {
+     var run = (radiusArray[arrayNumber]+zx)*(Math.cos(2*Math.PI-(((dotz1)*2*Math.PI)/(segments*Numsections))))
+     var rise = Math.sqrt((radiusArray[arrayNumber]+zx)*(radiusArray[arrayNumber]+zx)-run*run)
+     segmentArray.push([Math.round(centerX+run,0), Math.round(centerY-rise,0)])
+     //      context.beginPath()
+     // context.arc(Math.round(centerX+run,0), Math.round(centerY-rise,0), 7, 0, 2*Math.PI, false);
+     //   context.fillStyle = 'blue';
+     //   context.fill();
+     //   context.strokeStyle = '#003300';
+     //   context.stroke();
+     //   context.lineWidth = 1;
+     // if(dotz1==(sliceNumber-1)*Numsections)   
+     // {
+     //  segmentArray.reverse()
+     //  document.write("reverse")
+     // }   
+     dotz1--;
+
+
+    }
+   zx+=15;
+    }
+   // document.write(segmentArray2.length)
+   // document.write(segmentArray.length)
+   return segmentArray //shuffle
+ }
+ var testcount=0
+while(testcount<14){
+  
+
+          context.beginPath()
+     context.arc(segmentDots4Middle(operationDotsArray,Math.ceil(segments/2),2,14,3)[testcount][0], segmentDots4Middle(operationDotsArray,Math.ceil(segments/2),2,14,3)[testcount][1], 7, 0, 2*Math.PI, false);
+       context.fillStyle = 'blue';
+       context.fill();
+       context.strokeStyle = '#003300';
+       context.stroke();
+       context.lineWidth = 1;
+       testcount++;
+     }
+
+
+
+//push positive coordinates into array 
+function segmentDots4Pos(functionDotsArray,sliceNumber, layers, Numsections, NumColors)
+{
+
+  var zx=15
+  var segmentArray = new Array()
+
+  for(var layers1=0; layers1<layers; layers1++)
+  {
+    var dotz1 =(sliceNumber)*Numsections-1
+    var arrayNumber 
+    if(functionDotsArray==operationDotsArray)
+    {
+      arrayNumber=1
+    }
+    else if(functionDotsArray==managementDotsArray)
+    {
+      arrayNumber=2
+    }
+    else if(functionDotsArray==strategicDotsArray)
+    {
+      arrayNumber=3
+    }
+    // if(segments%2!=1 &&sliceNumber==segments/2-0.5)
+    // {
+    //     while(dotz1<sliceNumber/2*Numsections)
+    //   {
+    //    var run = (radiusArray[arrayNumber]+zx)*(Math.cos(2*Math.PI-(((dotz1)*2*Math.PI)/(segments*Numsections))))
+    //    var rise = Math.sqrt((radiusArray[arrayNumber]+zx)*(radiusArray[arrayNumber]+zx)-run*run)
+    //    segmentArray.push([Math.round(centerX+run,0), Math.round(centerY-rise,0)])
+    //         context.beginPath();
+    //    context.arc([Math.round(centerX+run,0), Math.round(centerY-rise,0)], 6, 0, 2*Math.PI, false);
+    //    context.fillStyle = 'red';
+    //    context.fill();
+    //    context.strokeStyle = '#003300';
+    //    context.stroke();
+    //    context.lineWidth = 1;
+    //    dotz1++;         
+    //   }
+      
+    // }
+    // else{
+    while(dotz1>(sliceNumber-1)*Numsections)
+    {
+     var run = (radiusArray[arrayNumber]+zx)*(Math.cos(2*Math.PI-(((dotz1)*2*Math.PI)/(segments*Numsections))))
+     var rise = Math.sqrt((radiusArray[arrayNumber]+zx)*(radiusArray[arrayNumber]+zx)-run*run)
+     segmentArray.push([Math.round(centerX+run,0), Math.round(centerY-rise,0)])
+context.beginPath();
+       context.arc([Math.round(centerX+run,0), Math.round(centerY-rise,0)], 6, 0, 2*Math.PI, false);
+       context.fillStyle = 'red';
+       context.fill();
+       context.strokeStyle = '#003300';
+       context.stroke();
+       context.lineWidth = 1;
+     // if(dotz1==(sliceNumber-1)*Numsections)   
+     // {
+     //  segmentArray.reverse()
+     //  document.write("reverse")
+     // }   
+     dotz1--;
+
+
+    }
+    // }
+   zx+=15;
+ }
+
+ return segmentArray //shuffle
+}
+//push negative coordinates into array. Same as previous funciton, just altered the y coordinates to push y negative coordinates into array
+function segmentDots4(functionDotsArray,sliceNumber, layers, Numsections, NumColors)
+{
+
+  var zx=15
+  var segmentArray = new Array()
+  for(var layers1=0; layers1<layers; layers1++)
+  {
+    var dotz1 =(sliceNumber-1)*Numsections+1
+    var arrayNumber 
+
+    if(functionDotsArray==operationDotsArray)
+    {
+      arrayNumber=1
+    }
+    else if(functionDotsArray==managementDotsArray)
+    {
+      arrayNumber=2
+    }
+    else if(functionDotsArray==strategicDotsArray)
+    {
+      arrayNumber=3
+    }
+    var sliced1= 0;
+    var countAgain=0
+
+    while(dotz1<sliceNumber*Numsections)
+    {
+     var run = (radiusArray[arrayNumber]+zx)*(Math.cos(2*Math.PI-(((dotz1)*2*Math.PI)/(segments*Numsections))))
+     var rise = Math.sqrt((radiusArray[arrayNumber]+zx)*(radiusArray[arrayNumber]+zx)-run*run)
+     segmentArray.push([Math.round(centerX+run,0), Math.round(centerY+rise,0)])
+     dotz1++;
+    }
+   zx+=15;
+ }
+ return segmentArray //shuffle
+
+}
+
+//combining poisitive and negative coordinates into ring level arrays: opeartionDotsArray, managementDotsArray, and strategicDotsArray
+var segmentCountAgain=1
+var operationDotsArray1= new Array() 
+var operationDotsArray1Pos= new Array() 
+var operationDotsArray1Mid= new Array()
+var managementDotsArray1= new Array()
+var managementDotsArray1Pos= new Array()
+var managementDotsArray1Mid= new Array()
+var strategicDotsArray1= new Array()
+var strategicDotsArray1Pos= new Array()
+var strategicDotsArray1Mid= new Array()
+while(segmentCountAgain<(segments)/2+1)
+{
+
+ operationDotsArray1.push(segmentDots4(operationDotsArray, segmentCountAgain, 10, 14, 3))
+ operationDotsArray1Pos.push(segmentDots4Pos(operationDotsArray, segmentCountAgain, 10, 14, 3))
+
+
+ managementDotsArray1.push(segmentDots4(managementDotsArray, segmentCountAgain, 7, 6, 3))
+ managementDotsArray1Pos.push(segmentDots4Pos(managementDotsArray, segmentCountAgain, 7, 6, 3))
+ 
+
+ strategicDotsArray1.push(segmentDots4(strategicDotsArray, segmentCountAgain, 5, 6, 2))
+ strategicDotsArray1Pos.push(segmentDots4Pos(strategicDotsArray, segmentCountAgain, 5, 6, 2))
+ 
+
+ segmentCountAgain++;
+
+} 
+  operationDotsArray1Mid.push(segmentDots4Middle(operationDotsArray,Math.ceil(segments/2),10,14,3))
+  managementDotsArray1Mid.push(segmentDots4Middle(managementDotsArray,Math.ceil(segments/2),7,6,3))
+  strategicDotsArray1Mid.push(segmentDots4Middle(strategicDotsArray,Math.ceil(segments/2),5,6,2))
+
+
+  //document.write(operationDotsArray1[3].length+ "HIII")
+  function fullArray (functionDotsArray, functionDotsPos, functionDotsMid){
+    var lastSection= new Array()
+
+    //var lastSliceTogether = functionDotsMid
+
+   // document.write(lastSliceTogether.length+"last slice teogher")
+   var totalDotsArray = new Array()
+
+
+   if(segments%2!=0)
+   {
+
+    functionDotsArray.splice(functionDotsArray.length-1,1)
+    functionDotsPos.splice(functionDotsPos.length-1,1)
+    totalDotsArray= functionDotsArray.concat(functionDotsPos).concat(functionDotsMid)
+   // totalDotsArray=.concat(functionDotsPos) //shuffle
+
+    
+  }
+  else
+  {
+    totalDotsArray = functionDotsArray.concat(functioNDotsPos)
+  }
+  return totalDotsArray
+  }
+            
+  //The last slice of an odd sliced pie will have fewer coordinates available. Did not reconcile because actual dots are less than available coordinates. The varialbes below are our arrays of coordinates per ring level
+
+  operationDotsArray = fullArray(operationDotsArray1, operationDotsArray1Pos, operationDotsArray1Mid)
+  managementDotsArray = fullArray(managementDotsArray1, managementDotsArray1Pos, managementDotsArray1Mid)
+  strategicDotsArray = fullArray(strategicDotsArray1, strategicDotsArray1Pos, strategicDotsArray1Mid)
+  document.write(operationDotsArray.length)
+//To draw dots for the operation level specifications of numbers at the top of the page
+ function DrawDotsOperation(USArray, UKArray, OtherArray, levelArray, sliceNumber)
+ {
+  var dots=0
+  var antiDots= new Array()
+  while(dots<USArray[sliceNumber][2])
+  {
+   context.beginPath();
+   context.arc(levelArray[sliceNumber][dots][0], levelArray[sliceNumber][dots][1], 6, 0, 2*Math.PI, false);
+   antiDots.push([levelArray[sliceNumber][dots][0], levelArray[sliceNumber][dots][1]])
+   context.fillStyle = 'red';
+   context.fill();
+   context.strokeStyle = '#003300';
+   context.stroke();
+   context.lineWidth = 1;
+   dots++;
+  }
+
+  dots1=0
+  while(dots1<UKArray[sliceNumber][2])
+  {
+   context.beginPath();
+   context.arc(levelArray[sliceNumber][dots+dots1][0], levelArray[sliceNumber][dots+dots1][1], 6, 0, 2*Math.PI, false);
+   antiDots.push(levelArray[sliceNumber][dots+dots1][0], levelArray[sliceNumber][dots+dots1][1])
+   context.fillStyle = 'blue';
+   context.fill();
+   context.lineWidth = 1;
+   context.strokeStyle = '#003300';
+   context.stroke();
+   dots1++
+  }
+  dots2=0
+  while(dots2<OtherArray[sliceNumber][2])
+  {
+   context.beginPath();
+   context.arc(levelArray[sliceNumber][dots2+dots1+dots][0], levelArray[sliceNumber][dots2+dots1+dots][1], 6, 0, 2*Math.PI, false);
+   context.fillStyle = 'yellow';
+   context.fill();
+   context.lineWidth = 1;
+   context.strokeStyle = '#003300';
+   context.stroke();
+   dots2++
+  }
+
+}
+
+//To draw dots for the management level specifications of numbers at the top of the page
+function DrawDotsManagement(USArray, UKArray, OtherArray, levelArray, sliceNumber){
+  var dots=0
+  var antiDots= new Array()
+  while(dots<USArray[sliceNumber][1]){
+   context.beginPath();
+   context.arc(levelArray[sliceNumber][dots][0], levelArray[sliceNumber][dots][1], 6, 0, 2*Math.PI, false);
+   antiDots.push([levelArray[sliceNumber][dots][0], levelArray[sliceNumber][dots][1]])
+   context.fillStyle = 'red';
+   context.fill();
+   context.strokeStyle = '#003300';
+   context.stroke();
+   context.lineWidth = 1;
+   dots++;
+ }
+
+dots1=0
+while(dots1<UKArray[sliceNumber][1])
+{
+ context.beginPath();
+ context.arc(levelArray[sliceNumber][dots+dots1][0], levelArray[sliceNumber][dots+dots1][1], 6, 0, 2*Math.PI, false);
+ antiDots.push(levelArray[sliceNumber][dots+dots1][0], levelArray[sliceNumber][dots+dots1][1])
+ context.fillStyle = 'blue';
+ context.fill();
+ context.lineWidth = 1;
+ context.strokeStyle = '#003300';
+ context.stroke();
+ dots1++
+}
+dots2=0
+//document.write(antiDots.length+"             ")
+while(dots2<OtherArray[sliceNumber][1])
+{
+ context.beginPath();
+ context.arc(levelArray[sliceNumber][dots2+dots1+dots][0], levelArray[sliceNumber][dots2+dots1+dots][1], 6, 0, 2*Math.PI, false);
+ context.fillStyle = 'yellow';
+ context.fill();
+ context.lineWidth = 1;
+ context.strokeStyle = '#003300';
+ context.stroke();
+ dots2++
+}
+
+}
+
+//To draw dots for the Strategic level specifications of numbers at the top of the page
+function DrawDotsStrategic(USArray, UKArray, OtherArray, levelArray, sliceNumber){
+  var dots=0
+  var antiDots= new Array()
+  while(dots<USArray[sliceNumber][0]){
+
+   context.beginPath();
+   context.arc(levelArray[sliceNumber][dots][0], levelArray[sliceNumber][dots][1], 6, 0, 2*Math.PI, false);
+   antiDots.push([levelArray[sliceNumber][dots][0], levelArray[sliceNumber][dots][1]])
+   context.fillStyle = 'red';
+   context.fill();
+   context.strokeStyle = '#003300';
+   context.stroke();
+   context.lineWidth = 1;
+   dots++;}
+//document.write(levelArray[6].length)
+dots1=0
+while(dots1<UKArray[sliceNumber][0])
+{
+ context.beginPath();
+ context.arc(levelArray[sliceNumber][dots+dots1][0], levelArray[sliceNumber][dots+dots1][1], 6, 0, 2*Math.PI, false);
+ antiDots.push(levelArray[sliceNumber][dots+dots1][0], levelArray[sliceNumber][dots+dots1][1])
+ context.fillStyle = 'blue';
+ context.fill();
+ context.lineWidth = 1;
+ context.strokeStyle = '#003300';
+ context.stroke();
+
+ dots1++
+}
+dots2=0
+while(dots2<OtherArray[sliceNumber][0])
+{
+ context.beginPath();
+ context.arc(levelArray[sliceNumber][dots2+dots1+dots][0], levelArray[sliceNumber][dots2+dots1+dots][1], 6, 0, 2*Math.PI, false);
+ context.fillStyle = 'yellow';
+ context.fill();
+ context.lineWidth = 1;
+ context.strokeStyle = '#003300';
+ context.stroke();
+ dots2++
+}
+//document.write(antiDots.length+"             ")
+
+}
+
+//Calling the drawing functions to actually place dots on the Heatmap
+var sliceCount=0
+while(sliceCount<segments)
+{
+  DrawDotsOperation(USArray, UKArray, OtherArray, operationDotsArray, sliceCount)
+  DrawDotsManagement(USArray, UKArray, OtherArray, managementDotsArray, sliceCount)
+  DrawDotsStrategic(USArray, UKArray, OtherArray, strategicDotsArray, sliceCount)
+  sliceCount++;
+}
+
+
+//Drawing the pie slices
+//===============================================================
+
+function plotCoordinates(segments, radius)
+{
+  var coordinateArray = new Array()
+  var slice= 0 
+  var startingslice= (0)
+  while (slice < segments)
+  {
+    var run1 = (radius)*(Math.cos(2*Math.PI-(((startingslice)*2*Math.PI)/segments)))
+    var rise1 = Math.sqrt((radius)*(radius)-run1*run1)
+
+    coordinateArray.push([Math.round(run1), Math.round(rise1)])
+    coordinateArray.push([Math.round(run1), Math.round(-rise1)])
+    slice++
+    startingslice++
+  }
+  coordinateArray.splice(0,1)
+  return coordinateArray; 
+}
+
+function plotCoordinates1(segments, radius)
+{
+  var coordinateArray = new Array()
+  var slice= 0
+
+  while (slice < segments)
+  {
+    var run1 = (radius)*(Math.cos(2*Math.PI-(((slice)*2*Math.PI)/(segments))))
+    var rise1 = Math.sqrt((radius)*(radius)-run1*run1)
+    coordinateArray.push([Math.round(run1), Math.round(rise1)])
+    slice++
+  }
+
+    return coordinateArray; 
+
+  }
+
+  function plotCoordinates1Pos(segments, radius)
+  {
+    var coordinateArray = new Array()
+    var slice= 0
+    while (slice < segments/2+1)
+    {
+      var run1 = (radius)*(Math.cos(2*Math.PI-(((slice)*2*Math.PI)/(segments))))
+      var rise1 = Math.sqrt((radius)*(radius)-run1*run1)
+      coordinateArray.push([Math.round(run1), Math.round(-rise1)])
+      slice++
+        
+    }     
+    return coordinateArray; 
+  }
+
+  var segmentsDraw = segments
+  var segmentsDraw2= segments*2
+  var number = 0
+  var legendRadius = radius + 380
+   while(number <segmentsDraw)
+   {
+    context.lineWidth = 3;
+    context.beginPath();
+    context.beginPath();
+    context.moveTo(centerX, centerY);
+    context.lineTo(centerX+plotCoordinates(segmentsDraw,radius)[number][0], centerY+plotCoordinates(segmentsDraw,radius)[number][1]);
+       context.stroke();
+       number++
+   }
+   var number1
+
+   number1=1
+   var legendArray= new Array()
+   while(number1 <segments)
+   {
+    context.lineWidth = 3;
+    context.beginPath();
+    context.beginPath();
+    legendArray.push([centerX+plotCoordinates1(segmentsDraw2,legendRadius)[number1][0], centerY+plotCoordinates1(segmentsDraw2,legendRadius)[number1][1]])
+    context.stroke();
+    context.strokeStyle = '#ff0000';
+    context.stroke();
+    number1+=2;
+   }
+   while(number1 <segments)
+   {
+    context.lineWidth = .5;
+    context.beginPath();
+    context.beginPath()
+    legendArray.push([centerX+plotCoordinates1(segmentsDraw2,legendRadius)[number1][0], centerY+plotCoordinates1(segmentsDraw2,legendRadius)[number1][1]])
+    context.stroke();
+    context.strokeStyle = '#ff0000';
+    context.stroke();
+    number1+=2;
+   }
+   number2=1;
+   while(number2 <segments+1)
+   {
+    context.lineWidth = .5;
+    context.beginPath();
+    context.beginPath();
+    legendArray.push([centerX+plotCoordinates1Pos(segmentsDraw2,legendRadius)[number2][0], centerY+plotCoordinates1Pos(segmentsDraw2,legendRadius)[number2][1]])
+    context.stroke();
+    context.strokeStyle = '#ff0000';
+    context.stroke();
+    number2+=2;
+   }
+  //Drawing the coordinates for where the legends will show, corresponding to a midway point between two lines of the slice.
+
+function drawLegend(US, UK, Other, startingCords, functionArray)
+{ 
+  x=100
+  y=40
+  var count=0
+  var CountryArray= new Array()
+  var USArray = new Array()
+  var UKArray = new Array()
+  var OtherArray = new Array()
+  USArray=
+  //US dots cords (x,y), (x,y), (x,y)
+  [[startingCords[0]-x,startingCords[1]-y], 
+  [startingCords[0]-x,startingCords[1]], 
+  [startingCords[0]-x,startingCords[1]+y]]
+
+  //UK dots cords (x,y), (x,y), (x,y)
+  UKArray=
+  [[startingCords[0],startingCords[1]-y], 
+  [startingCords[0],startingCords[1]], 
+  [startingCords[0],startingCords[1]+y]]
+  
+  //Other dots cords (x,y), (x,y), (x,y)
+  OtherArray=
+  [[startingCords[0]+x,startingCords[1]-y],
+  [startingCords[0]+x,startingCords[1]], 
+  [startingCords[0]+x,startingCords[1]+y]]
+
+
+  //"US, UK, other lables" cords (x,y), (x,y), (x,y)
+  CountryArray=
+  [[startingCords[0]-x,startingCords[1]-2*y],
+  [startingCords[0],startingCords[1]-2*y],
+  [startingCords[0]+x,startingCords[1]-2*y]  ]
+
+  var labelArray= new Array()
+
+  labelArray=[[startingCords[0]-2*x,startingCords[1]-y],[startingCords[0]-2*x,startingCords[1]],[startingCords[0]-2*x,startingCords[1]+y]]
+  var nameArray= new Array
+  nameArray=[startingCords[0]-2*x,startingCords[1]-2*y]
+ // return cordeArray
+ while(count<USArray.length)
+ {
+  context.beginPath();
+  context.font="30px Arial"
+  context.fillStyle = "black";
+  context.textAlign="center"
+  context.fillText(US[count], USArray[count][0], USArray[count][1]);
+
+  context.fill();
+  count++
+}
+count=0
+while(count<UKArray.length)
+{
+  context.beginPath();
+  context.font="30px Arial"
+  context.fillStyle = "black";
+  context.textAlign="center"
+  context.fillText(UK[count], UKArray[count][0], UKArray[count][1]);
+
+  context.fill();
+  count++
+}
+count=0
+while(count<OtherArray.length)
+{
+  context.beginPath();
+  context.font="30px Arial"
+  context.fillStyle = "black";
+  context.textAlign="center"
+  context.fillText(Other[count], OtherArray[count][0], OtherArray[count][1]);
+
+  context.fill();
+  count++
+}
+var labels = new Array("US", "UK", "Other")
+var colors = new Array("red", "blue", "yellow")
+var newCount=0
+count=0
+while(count<CountryArray.length)
+{
+
+
+  context.beginPath();
+  context.arc(CountryArray[count][0], CountryArray[count][1]+10, 6, 0, 2*Math.PI, false);
+  context.fillStyle = colors[newCount];
+  context.fill();
+  context.lineWidth = 1;
+  context.strokeStyle = '#003300';
+  context.stroke();
+
+  context.beginPath();
+  context.fillStyle = "black"
+  context.font="25px Arial"
+  context.textAlign="center"
+  context.fillText(labels[newCount], CountryArray[count][0], CountryArray[count][1]);
+
+  context.fill();
+  count++
+  newCount++;
+
+}
+var labelCount=0
+
+var labelNames= new Array("Strategic", "Managerial", "Operational")
+
+context.beginPath();
+context.fillStyle = "black"
+context.font="30px Arial"
+context.textAlign="right"
+context.fillText(functionArray, nameArray[0], nameArray[1]);
+context.fill();
+
+while(labelCount<3)
+{
+  context.beginPath();
+  context.fillStyle = "black"
+  context.font="25px Arial"
+  context.textAlign="right"
+  context.fillText(labelNames[labelCount], labelArray[labelCount][0], labelArray[labelCount][1]);
+  context.fill();
+
+  labelCount++;
+
+}
+
+
+}
+
+
+var number= 0 
+var  functionArray= new Array("Marketing", "Sales", "Supply Chain", "R&D", "Finance/IT/BizDev/Legal", "HR/Corp Comm", "Quality", "NEW")
+document.write(functionArray[0])
+while (number<segments)
+{
+  drawLegend(USArray[number], UKArray[number], OtherArray[number], legendArray[number], functionArray[number])
+  number++;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//Drawing center white circle with CEO dots
+
+context.beginPath();
+context.arc(centerX, centerY, radius3, 0, 2*Math.PI, false);
+context.fillStyle = 'white';
+context.fill();
+context.strokeStyle = '#003300';
+context.stroke();  
+
+context.beginPath();
+context.fillStyle = '#000';
+context.font="25px Arial";
+
+context.beginPath();
+context.arc(centerX, centerY+20, 6, 0, 2*Math.PI, false);
+context.fillStyle = 'red';
+context.fill();
+context.lineWidth = 1;
+context.strokeStyle = '#003300';
+context.stroke();
+
+context.beginPath();
+context.arc(centerX, centerY-20, 6, 0, 2*Math.PI, false);
+context.fillStyle = 'blue';
+context.fill();
+context.lineWidth = 1;
+context.strokeStyle = '#003300';
+context.stroke();
+
+
+</script>
+</body>
+</html> 
